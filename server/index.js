@@ -8,7 +8,6 @@ const todoRoutes = require("./routes/todoRoutes");
 const app = express();
 app.use(express.json());
 
-// Log every API request: method, url, status, time taken, and body for writes
 app.use("/api", (req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
@@ -22,10 +21,8 @@ app.use("/api", (req, res, next) => {
   next();
 });
 
-// API routes
 app.use("/api/todos", todoRoutes);
 
-// Serve the React build (used in production)
 const buildPath = path.join(__dirname, "../client/dist");
 app.use(express.static(buildPath));
 app.get("/{*splat}", (req, res) => {
@@ -38,6 +35,13 @@ async function startServer() {
   let mongoUri = process.env.MONGO_URI;
 
   if (!mongoUri) {
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "MONGO_URI is not set. Add your MongoDB Atlas or external MongoDB connection string in Render/your environment before deploying."
+      );
+      process.exit(1);
+    }
+
     const mongoServer = await MongoMemoryServer.create();
     mongoUri = mongoServer.getUri();
     console.log("Using in-memory MongoDB server for local development");
